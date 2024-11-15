@@ -1,0 +1,37 @@
+.venv/
+venv/
+
+# Archivos de Python compilados
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Archivos de configuración de IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de logs y depuración
+*.log
+*.tmp
+
+
+# Distribución y construcción del paquete
+build/
+dist/
+*.egg-info/
+
+# Archivos relacionados con pruebas
+.coverage
+.cache/
+
+# Archivos relacionados con herramientas de control de estilo
+.mypy_cache/
+.pytest_cache/
+.tox/
