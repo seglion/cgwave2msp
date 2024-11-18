@@ -335,6 +335,8 @@ class CGIReader:
         Crea un archivo de entrada para MSP.
         """
         self.generate_openboundary_segments()
+        self.generate_contour_segments()  
+        ini_id_openboundary= len(self.coastlines_segments) + 1
 
         for marea in self.tide: 
             file = self.key +'_'+ str(marea) +'CON'
@@ -353,14 +355,48 @@ class CGIReader:
                     f.write('*\n')
                     f.write('*    NNA     NNB\n')
                     f.write('*\n')
-                    f.write('{:>12}'.format(int(100))+'{:>7}'.format(int(100))+'\n')
+                    f.write('{:>12}'.format(int(len(self.open_segments)))
+                            +'{:>7}'.format(int(len(self.coastlines_segments)))
+                            +'\n')
                     f.write('F    (5X,3I7)\n')
                     f.write('*\n')
                     f.write('*    SEG  NA1  NA2\n')
                     for i,j in enumerate(self.open_segments):
                         
-                        f.write('{:>12}'.format(int(i))+'{:>7}'.format(
+                        f.write('{:>12}'.format(int(i+ini_id_openboundary))+'{:>7}'.format(
                             int(j[0]))+'{:>7}'.format(int(j[1]))+'\n')
+                    f.write('F    (5X,3I7,F10.5)\n')
+                    f.write('*\n')
+                    f.write('*    SEG  NB1  NB2    ALFA\n')
+                    for i,j in enumerate(self.coastlines_segments):
+                        
+                        f.write('{:>12}'.format(int(i+1))
+                                +'{:>7}'.format(int(j[0])) 
+                                +'{:>7}'.format(int(j[1]))
+                                +'{:>11.5f}'.format(float(j[2]))
+                                +'\n')
+                        
+                    f.write('F    (4I10)\n')
+                    f.write('*    NÚMERO    NÚMERO    NÚMERO     NUDOS\n')
+                    f.write('*    NUDOS   ELEMENTOS   DIMENS   POR ELEMENTO\n')
+                    f.write('*    (NN)       (NE)     (NDIM)     (NNE)\n')
+                    f.write('{:>10}'.format(int(self.nodesRotaded.coordinates.shape[0]))
+                            +'{:>10}'.format(int(self.elements.elements.shape[0]))
+                            +'{:>10}'.format(int(2))
+                            +'{:>10}'.format(int(2))
+                            +'\n')
+                    f.write('F    (I7,8X,3(2X,F14.4))\n')
+                    f.write('*\n')
+                    f.write('*    COORDENADAS NODALES\n')
+                    f.write('*\n')
+                    f.write('*  NUDO         X          Y         Z\n')
+                    f.write('*\n')
+                    for i,j  in enumerate(self.nodesRotaded.coordinates):
+                        f.write('{:>7}'.format(int(j[0]))
+                                +'{:>24.4f}'.format(float(j[1]))
+                                +'{:>16.4f}'.format(float(j[2]))
+                                +'{:>16.4f}'.format(float(j[3]+marea)))
+                                                    
 
     def generate_openboundary_segments(self):
 
@@ -373,6 +409,22 @@ class CGIReader:
         
         self.open_segments= segments
 
+    def generate_contour_segments(self):
+
+        segments = []
+        for ob in self.coastlines:
+            node_ids = ob.node_id
+        # Generar segmentos entre nodos consecutivos
+            for i in range(len(node_ids) - 1):
+                segments.append([node_ids[i], node_ids[i + 1],ob.reflection_coefficient])
+        
+        self.coastlines_segments= segments
+    
+    def save_triangulated_mesh(self):
+        np.savetxt('TriangulatedMesh.txt',self.elements.elements)
+
+    def save_node_mesh(self):
+        np.savetxt('NodeMesh.txt',self.nodes.coordinates)
 
     def show_open_boundaries(self):
         """
