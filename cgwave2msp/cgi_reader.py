@@ -1,6 +1,7 @@
 # Archivo: cgi_reader.py
 import numpy as np
-from cgwave2msp.open_boundary import OpenBoundary
+import matplotlib.pyplot as plt
+from cgwave2msp.open_Boundary import OpenBoundary
 from cgwave2msp.coastline import Coastline
 from cgwave2msp.nodes import Nodes
 from cgwave2msp.elements import Elements
@@ -206,6 +207,78 @@ class CGIReader:
             print(f"Error al convertir un valor: {ve}")
         except Exception as e:
             print(f"Error al leer el archivo: {e}")
+
+    
+    def cartesian_to_meteorological(self,cartesian_angle):
+
+        meteo_angle = (90 - cartesian_angle) % 360
+        return meteo_angle
+
+
+    def calculate_North_Orientation_Mesh(self):
+        """
+        Ajusta los nodos del OpenBoundary para que el centro del círculo esté en (0, 0) y el semicirculo esté orientado hacia el norte.
+        """
+        open_boundary = self.open_boundaries[0]
+        
+        nodes = self.nodes.coordinates
+
+        id_start = open_boundary.node_id[0]
+        id_end = open_boundary.node_id[-1]
+
+
+        start_node = self.nodes.coordinates[id_start - 1]
+        end_node = self.nodes.coordinates[id_end - 1]
+        
+        avg_x = (start_node[1] + end_node[1]) / 2
+        avg_y = (start_node[2] + end_node[2]) / 2
+
+        # Calcular el desplazamiento necesario para centrar el OpenBoundary en (0, 0)
+        delta_x = -avg_x
+        delta_y = -avg_y
+
+        # Aplicar la traslación a los nodos
+        adjusted_nodes = []
+
+
+
+        for node_id in nodes[:,0]:
+            node_index = node_id - 1  # Asumimos que los node_ids son índices 1-based
+
+            if nodes is not None and node_index < len(self.nodes.coordinates):
+               
+                original_node = nodes[int(node_index)]
+                
+                adjusted_x = original_node[1] + delta_x
+                adjusted_y = original_node[2] + delta_y
+
+                adjusted_nodes.append([original_node[0], adjusted_x, adjusted_y, original_node[3]])
+            
+            # Orientar hacia el norte (rotación para hacer que initial_angle sea 0)
+        print(open_boundary.orientation_angle)
+        angle_radians = -np.radians(open_boundary.orientation_angle-90)
+        
+        rotated_nodes = []
+        for node in adjusted_nodes:
+            x = node[1]
+            y = node[2]
+            rotated_x = x * np.cos(angle_radians) - y * np.sin(angle_radians)
+            rotated_y = x * np.sin(angle_radians) + y * np.cos(angle_radians)
+            rotated_nodes.append([node[0], rotated_x, rotated_y, node[3]])
+
+
+            # Actualizar los nodos del OpenBoundary
+        adjusted_nodes = np.array(adjusted_nodes)
+        self.nodesRotaded = Nodes(np.array(rotated_nodes))
+           
+
+        print(f"Adjusted OpenBoundary with calculated center between start and end nodes at ({avg_x}, {avg_y}) and oriented north.")
+        plt.figure()
+        plt.plot(adjusted_nodes[:,1], adjusted_nodes[:,2], 'ro')
+        plt.plot(self.nodesRotaded.coordinates [:,1],self.nodesRotaded.coordinates [:,2], 'bo')
+        plt.show()
+
+
     def show_open_boundaries(self):
         """
         Muestra la información de todas las OpenBoundary creadas.
@@ -223,3 +296,5 @@ class CGIReader:
             print(f"\n--- Coastline Info {idx + 1} ---")
             coastline.show_coastline_info()
             print(f"Length of Node ID Array: {len(coastline.node_id)}")
+
+

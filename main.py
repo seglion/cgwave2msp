@@ -9,3 +9,7 @@ cgi_reader = CGIReader(file_path)
 
 # Mostrar toda la información de las instancias creadas
 cgi_reader.show_open_boundaries()
+
+# Mostrar toda la información de las Coastlines creadas
+cgi_reader.show_coastlines()
+cgi_reader.calculate_North_Orientation_Mesh()
