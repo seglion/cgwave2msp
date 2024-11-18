@@ -16,5 +16,6 @@ cgi_reader.show_open_boundaries()
 cgi_reader.show_coastlines()
 cgi_reader.calculate_North_Orientation_Mesh()
 cgi_reader.create_mesh_file()
+cgi_reader.create_contour_file()
 
 

@@ -329,9 +329,49 @@ class CGIReader:
                             + '{:>10}'.format(int(j[1]))
                             +'{:>10}'.format(int(j[2]))
                             +'\n')
+                    
+    def create_contour_file(self):
+        """
+        Crea un archivo de entrada para MSP.
+        """
+        self.generate_openboundary_segments()
 
+        for marea in self.tide: 
+            file = self.key +'_'+ str(marea) +'CON'
+            print(f"Escribiendose el archivo {file}")
+            with open(file, 'w') as f:
+                    f.write('* DATOS DE LOS CONTORNOS: ESTUDIO DE RESONANCIA\n')
+                    f.write('*\n')
+                    f.write('*        ---- DATOS DE LOS CONTORNOS ----\n')
+                    f.write('*\n')
+                    f.write('*          A (OCEANO) , B (COSTA)\n')
+                    f.write('*\n')
+                    f.write('*          NN1 : NÚMERO DE SEGMENTOS DE A\n')
+                    f.write('*          NN2 : NÚMERO DE SEGMENTOS DE B\n')
+                    f.write('*\n')
+                    f.write('F    (5X,2I7)\n')
+                    f.write('*\n')
+                    f.write('*    NNA     NNB\n')
+                    f.write('*\n')
+                    f.write('{:>12}'.format(int(100))+'{:>7}'.format(int(100))+'\n')
+                    f.write('F    (5X,3I7)\n')
+                    f.write('*\n')
+                    f.write('*    SEG  NA1  NA2\n')
+                    for i,j in enumerate(self.open_segments):
+                        
+                        f.write('{:>12}'.format(int(i))+'{:>7}'.format(
+                            int(j[0]))+'{:>7}'.format(int(j[1]))+'\n')
 
+    def generate_openboundary_segments(self):
 
+        segments = []
+        for ob in self.open_boundaries:
+            node_ids = ob.node_id
+        # Generar segmentos entre nodos consecutivos
+            for i in range(len(node_ids) - 1):
+                segments.append([node_ids[i], node_ids[i + 1]])
+        
+        self.open_segments= segments
 
 
     def show_open_boundaries(self):
