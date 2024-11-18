@@ -1,4 +1,5 @@
 # Archivo: cgi_reader.py
+
 import numpy as np
 import matplotlib.pyplot as plt
 from cgwave2msp.open_Boundary import OpenBoundary
@@ -7,7 +8,7 @@ from cgwave2msp.nodes import Nodes
 from cgwave2msp.elements import Elements
 
 class CGIReader:
-    def __init__(self, filepath):
+    def __init__(self,  filepath,key,tide):
         self.filepath = filepath
         self.parameters = {}
         self.open_boundaries = []  # Puede haber múltiples OpenBoundary
@@ -15,6 +16,9 @@ class CGIReader:
         self.nodes = None
         self.elements = None
         self._read_file()
+        self.key = key
+        self.tide = tide
+    
 
     def _read_file(self):
         """
@@ -270,13 +274,64 @@ class CGIReader:
             # Actualizar los nodos del OpenBoundary
         adjusted_nodes = np.array(adjusted_nodes)
         self.nodesRotaded = Nodes(np.array(rotated_nodes))
-           
 
         print(f"Adjusted OpenBoundary with calculated center between start and end nodes at ({avg_x}, {avg_y}) and oriented north.")
         plt.figure()
         plt.plot(adjusted_nodes[:,1], adjusted_nodes[:,2], 'ro')
         plt.plot(self.nodesRotaded.coordinates [:,1],self.nodesRotaded.coordinates [:,2], 'bo')
         plt.show()
+
+    def create_mesh_file(self):
+        """
+        Crea un archivo de entrada para MSP.
+        """
+
+        for marea in self.tide: 
+            file = self.key +'_'+ str(marea) +'MEF'
+            print(f"Escribiendose el archivo {file}")
+            with open(file, 'w') as f:
+                f.write('* ESTUDIO DE RESONANCIA\n')
+                f.write('*\n')
+                f.write('*        ---- DATOS DE LA MALLA ----\n')
+                f.write('*\n')
+                f.write('F  (4I10)\n')
+                f.write('*      NUMERO   NUMERO    NUMERO     NUDOS\n')
+                f.write('*       NUDOS  ELEMENTOS  DIMENS   POR ELEMTO\n')
+                f.write('*       (NN)     (NE)     (NDIM)     (NNE)\n')
+                f.write('{:>10}'.format(str(self.nodesRotaded.coordinates.shape[0]))
+                        +'{:>10}'.format(str(self.elements.elements.shape[0]))
+                        +'{:>10}'.format(str(2))+'{:>10}'.format(str(3)))
+                f.write('\n')
+                f.write('F    (I7,8X,3(2X,F14.4))\n')
+                f.write('*\n')
+                f.write('*         COORDENADAS  NODALES\n')
+                f.write('*\n')
+                f.write('*  NUDO             X           Y           Z\n')
+                f.write('*\n')
+                for i,j  in enumerate(self.nodesRotaded.coordinates):
+                        
+                    f.write('{:>7}'.format(int(j[0]))
+                            +'{:>23.4f}'.format(float(j[1]))
+                            + '{:>15.4f}'.format(float(j[2]))
+                            +'{:>15.4f}'.format(float(j[3]+marea))
+                            +'\n')
+                f.write('F    (2X,I7,6X,I7,7(3X,I7))\n')
+                f.write('*\n')
+                f.write('*        CONEXIONES NODALES\n')
+                f.write('*\n')
+                f.write('*  ELEMENTO     N1      N2      N3\n')
+                f.write('*\n')
+
+                for i,j in enumerate(self.elements.elements):
+
+                    f.write('{:>9}'.format(int(i+1))
+                            +'{:12}'.format(int(j[0]))
+                            + '{:>10}'.format(int(j[1]))
+                            +'{:>10}'.format(int(j[2]))
+                            +'\n')
+
+
+
 
 
     def show_open_boundaries(self):
